@@ -17,12 +17,20 @@ import {
   initSql,
 } from '../utils';
 import { getProject } from './supabase';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Users } from '../model/user.entity';
+import { Repository } from 'typeorm';
+import { SupabaseContext } from '@supabase/server';
 
 const secretsClient = new vault.SecretsApi(vaultClientConfig);
 const oauth2Client = new ClientOAuth2(config);
 
 @Injectable()
 export class SupabaseService {
+  constructor(
+    @InjectRepository(Users)
+    private userRepo: Repository<Users>,
+  ) {}
   async getSessionForUser(userId: string) {
     let session = (
       await secretsClient.kvV2Read(`users/${userId}/session`, 'secret')
@@ -227,5 +235,37 @@ export class SupabaseService {
     });
 
     return secretKey;
+  }
+
+  async getUserIdByEmail(
+    profile: {
+      email: string;
+      user_name: string;
+    },
+    ctx: SupabaseContext,
+  ) {
+    const email = profile.email;
+    if (!email) throw 'no_email';
+    const {
+      data: { users },
+    } = await ctx.supabaseAdmin.auth.admin.listUsers();
+
+    // Filter the returned array by email
+    const existingUser = await this.userRepo.findOneBy({ email });
+
+    let userId = existingUser?.id;
+
+    if (!userId) {
+      const { data: newuser, error: createUserError } =
+        await ctx.supabaseAdmin.auth.admin.createUser({
+          email,
+          user_metadata: { name: profile.user_name },
+        });
+
+      if (createUserError) throw createUserError;
+
+      userId = newuser.user.id;
+    }
+    return userId;
   }
 }

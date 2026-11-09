@@ -54,7 +54,6 @@ export class LoginController {
       const oauthSession = await oauth2Client.code.getToken(
         (req as Request).url,
       );
-      // console.info(oauthSession)
 
       if (!oauthSession.accessToken) throw 'invalid_tokens';
 
@@ -72,36 +71,14 @@ export class LoginController {
         return response.redirect(`${config.supabaseConnectRedirect}`);
       }
 
-      const email = profile.email;
-
-      if (!email) throw 'no_email';
-      const {
-        data: { users },
-      } = await ctx.supabaseAdmin.auth.admin.listUsers();
-
-      // Filter the returned array by email
-      const existingUser = users.find((user) => (user as User).email === email);
-
-      let userId = existingUser?.id;
-
-      if (!userId) {
-        const { data: newuser, error: createUserError } =
-          await ctx.supabaseAdmin.auth.admin.createUser({
-            email,
-            user_metadata: { name: profile.user_name },
-          });
-
-        if (createUserError) throw createUserError;
-
-        userId = newuser.user.id;
-      }
+      const userId = await this.appService.getUserIdByEmail(profile, ctx);
 
       await this.appService.saveOauthSession(userId, oauthSession);
 
       const { data: linkData, error: createUserLinkError } =
         await ctx.supabaseAdmin.auth.admin.generateLink({
           type: 'magiclink',
-          email,
+          email: profile.email,
           options: {
             redirectTo: config.supabaseConnectRedirect,
           },
