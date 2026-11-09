@@ -38,7 +38,7 @@ const oauth2Client = new ClientOAuth2(config);
   }),
 )
 @ApiBearerAuth('user')
-export class AppController {
+export class SupabaseController {
   constructor(private readonly appService: AppService) {}
 
   @Get('platform/me')

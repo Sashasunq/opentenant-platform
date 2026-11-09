@@ -2,7 +2,6 @@ import ClientOAuth2 from 'client-oauth2';
 import jwt from 'jsonwebtoken';
 import { PLATFORM_HOST } from '../config';
 import * as fs from 'fs';
-import * as path from 'path';
 
 // ── GitHub App credentials ──────────────────────────────────────────
 export const GITHUB_APP_SLUG = process.env.GITHUB_APP_SLUG as string; // e.g. "ffmpeglab"

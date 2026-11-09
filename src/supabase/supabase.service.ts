@@ -22,7 +22,7 @@ const secretsClient = new vault.SecretsApi(vaultClientConfig);
 const oauth2Client = new ClientOAuth2(config);
 
 @Injectable()
-export class AppService {
+export class SupabaseService {
   async getSessionForUser(userId: string) {
     let session = (
       await secretsClient.kvV2Read(`users/${userId}/session`, 'secret')

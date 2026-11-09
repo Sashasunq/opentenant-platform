@@ -25,7 +25,8 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.4.7",
-    "@openapitools/openapi-generator-cli": "^2.40.1",
+    "@nestjs/schedule": "^12.0.1",
+    "@nestjs/typeorm": "^11.0.3",
     "@scalar/nestjs-api-reference": "^1.2.14",
     "@supabase/server": "^1.4.1",
     "@supabase/supabase-js": "^2.112.3",
@@ -44,9 +45,11 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "supabase-management-js": "^2.0.2",
-    "vault-client-typescript": "^0.3.10"
+    "vault-client-typescript": "^0.3.10",
+    "typeorm": "1.1.0"
   },
   "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.42.0",
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
     "@nestjs/cli": "^11.0.0",
