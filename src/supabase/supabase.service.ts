@@ -246,9 +246,6 @@ export class SupabaseService {
   ) {
     const email = profile.email;
     if (!email) throw 'no_email';
-    const {
-      data: { users },
-    } = await ctx.supabaseAdmin.auth.admin.listUsers();
 
     // Filter the returned array by email
     const existingUser = await this.userRepo.findOneBy({ email });
