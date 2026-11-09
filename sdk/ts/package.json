@@ -1,10 +1,10 @@
 {
   "name": "opentenant-platform",
-  "description": "typescript client for ffmpeglab platform",
+  "description": "typescript client for opentenant platform",
   "author": "danilaplee",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ffmpeglab/platform.git"
+    "url": "https://github.com/opentenant/platform.git"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
