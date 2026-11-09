@@ -7,9 +7,19 @@ import { GithubLoginController } from './git/github.controller';
 import { PipelineController } from './pipelines/pipeline.controller';
 import { PipelineService } from './pipelines/pipeline.service';
 import { WebhookController } from './webhook.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import {config} from './config';
+import { GithubService } from './git/github.service';
+import { Users } from './model/user.entity';
 
 @Module({
-  imports: [],
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      ...config.db,
+    }),
+    TypeOrmModule.forFeature([Users]),
+  ],
   controllers: [
     SupabaseController,
     LoginController,
@@ -18,6 +28,6 @@ import { WebhookController } from './webhook.controller';
     PipelineController,
     WebhookController,
   ],
-  providers: [SupabaseService, PipelineService],
+  providers: [SupabaseService, PipelineService, GithubService],
 })
 export class AppModule {}

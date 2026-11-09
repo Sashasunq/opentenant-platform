@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, User } from '@supabase/supabase-js';
 import { supabaseEnv } from '../config';
 
 export const getUserByEmail = async (

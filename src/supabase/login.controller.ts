@@ -6,7 +6,7 @@ import {
   Session,
   UseGuards,
 } from '@nestjs/common';
-import { AppService } from './supabase.service';
+import { SupabaseService } from './supabase.service';
 import ClientOAuth2 from 'client-oauth2';
 import { config, supabaseEnv } from '../config';
 
@@ -27,7 +27,7 @@ const oauth2Client = new ClientOAuth2(config);
   }),
 )
 export class LoginController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: SupabaseService) {}
 
   @Get('platform/login')
   @ApiResponse({ type: ConnectRedirectResponseDTO })

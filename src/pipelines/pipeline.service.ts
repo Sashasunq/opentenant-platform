@@ -18,7 +18,7 @@ import { getGitAdapter, DirEntry } from '../git/git-clients';
 import ClientOAuth2 from 'client-oauth2';
 import { createInstallationAccessToken } from '../git/github-auth';
 import { gitlabOAuthClient } from '../git/gitlab-auth';
-import { AppService } from '../supabase/supabase.service'; // <-- import AppService
+import { SupabaseService } from '../supabase/supabase.service'; 
 
 const secretsClient = new vault.SecretsApi(vaultClientConfig);
 
@@ -36,7 +36,7 @@ function decodeRepoKey(key: string): string {
 @Injectable()
 export class PipelineService {
   // ---- inject AppService ----
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: SupabaseService) {}
 
   // ---- session handling ----
   async getSessionForUser(
