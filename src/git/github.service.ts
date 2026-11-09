@@ -45,8 +45,8 @@ export class GithubService {
       await Promise.all(
         emails.map((email) => this.userRepo.findOneBy({ email })),
       )
-    ).filter(i=>i)?.[0];
-    
+    ).filter((i) => i)?.[0];
+
     let userId = existingUser?.id;
 
     if (!userId) {
