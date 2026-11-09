@@ -18,7 +18,7 @@ import { getGitAdapter, DirEntry } from '../git/git-clients';
 import ClientOAuth2 from 'client-oauth2';
 import { createInstallationAccessToken } from '../git/github-auth';
 import { gitlabOAuthClient } from '../git/gitlab-auth';
-import { SupabaseService } from '../supabase/supabase.service'; 
+import { SupabaseService } from '../supabase/supabase.service';
 
 const secretsClient = new vault.SecretsApi(vaultClientConfig);
 
