@@ -112,7 +112,7 @@ export class GitlabLoginController {
           `[gitlab/callback] 🔀 Redirecting to project settings: ${redirectUrl}`,
         );
       } else {
-        redirectUrl = `${config.webAppRedirect}?gitlab=connected`;
+        redirectUrl = `${config.gitConnectRedirect}?gitlab=connected`;
         console.log(
           `[gitlab/callback] 🔀 Redirecting to default: ${redirectUrl}`,
         );
@@ -122,7 +122,7 @@ export class GitlabLoginController {
     } catch (err) {
       console.error('[gitlab/callback] error:', err);
       response.redirect(
-        `${config.webAppRedirect}?status=error&reason=${encodeURIComponent(String(err))}`,
+        `${config.gitConnectRedirect}?status=error&reason=${encodeURIComponent(String(err))}`,
       );
     }
   }

@@ -4,7 +4,7 @@ import { Users } from './model/user.entity';
 export const SUPABASE_PLATFORM = 'https://api.supabase.com/';
 
 export const PLATFORM_HOST = process.env.PLATFORM_HOST as string;
-export const WEBAPP_BASE = process.env.WEBAPP_HOST as string; // e.g. https://app.ffmpeglab.com
+export const WEBAPP_BASE = process.env.WEBAPP_HOST as string; // e.g. https://webapp.ffmpeglab.com/webapp
 
 export const config = {
   db: {
@@ -22,9 +22,12 @@ export const config = {
   authorizationUri: 'https://api.supabase.com/v1/oauth/authorize',
   accessTokenUri: 'https://api.supabase.com/v1/oauth/token',
   redirectUri: PLATFORM_HOST + '/platform/oauth2/callback',
-  webAppRedirect:
+  supabaseConnectRedirect:
     process.env.WEBAPP_HOST + '/pipelines?showPipelineTemplates=true',
+  gitConnectRedirect:
+    process.env.WEBAPP_HOST + '/editor',
 };
+
 export const TENANT_WORKER_LOGIN = 'worker@ffmpeglab.com';
 export const SUPABASE_URL = process.env.SUPABASE_URL;
 export const SUPABASE_PUBLISHABLE_KEY = process.env

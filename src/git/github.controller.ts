@@ -68,7 +68,7 @@ export class GithubLoginController {
           `[github/callback] 🔀 Redirecting to project settings: ${redirectUrl}`,
         );
       } else {
-        redirectUrl = `${config.webAppRedirect}?github=connected`;
+        redirectUrl = `${config.gitConnectRedirect}?github=connected`;
         console.log(
           `[github/callback] 🔀 Redirecting to default: ${redirectUrl}`,
         );
@@ -77,7 +77,7 @@ export class GithubLoginController {
     } catch (err) {
       console.error('[github/callback] ❌ Error:', err);
       response.redirect(
-        `${config.webAppRedirect}?status=error&reason=${encodeURIComponent(String(err))}`,
+        `${config.gitConnectRedirect}?status=error&reason=${encodeURIComponent(String(err))}`,
       );
     }
   }

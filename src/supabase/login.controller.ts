@@ -69,7 +69,7 @@ export class LoginController {
 
       if (session.user) {
         await this.appService.saveOauthSession(session.user, oauthSession);
-        return response.redirect(`${config.webAppRedirect}`);
+        return response.redirect(`${config.supabaseConnectRedirect}`);
       }
 
       const email = profile.email;
@@ -103,7 +103,7 @@ export class LoginController {
           type: 'magiclink',
           email,
           options: {
-            redirectTo: config.webAppRedirect,
+            redirectTo: config.supabaseConnectRedirect,
           },
         });
 
@@ -114,7 +114,7 @@ export class LoginController {
       return response.redirect(magiclink);
     } catch (err) {
       console.error('oauth2/callback err', err);
-      response.redirect(`${config.webAppRedirect}?status=error`);
+      response.redirect(`${config.supabaseConnectRedirect}?status=error`);
     }
   }
 }
