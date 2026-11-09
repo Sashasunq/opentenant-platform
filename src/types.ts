@@ -1,5 +1,5 @@
 import { V1ProjectWithDatabaseResponseStatus } from 'supabase-management-js';
-import { getProject } from './supabase';
+import { getProject } from './supabase/supabase';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SupabaseSession {

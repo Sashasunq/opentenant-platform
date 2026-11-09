@@ -7,7 +7,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { PipelineService } from './pipeline.service';
+import { PipelineService } from './pipelines/pipeline.service';
 import * as crypto from 'crypto';
 
 @Controller('git/webhook')

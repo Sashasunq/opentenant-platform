@@ -12,9 +12,9 @@ import { withSupabase, SupabaseCtx } from '@supabase/server/adapters/nestjs';
 import type { SupabaseContext } from '@supabase/server';
 import { User } from '@supabase/supabase-js';
 
-import { supabaseEnv, config, WEBAPP_BASE } from './config';
-import { ConnectRedirectResponseDTO } from './types';
-import { PipelineService } from './pipeline.service';
+import { supabaseEnv, config, WEBAPP_BASE } from '../config';
+import { ConnectRedirectResponseDTO } from '../types';
+import { PipelineService } from '../pipelines/pipeline.service';
 import {
   GITHUB_APP_SLUG,
   createInstallationAccessToken,

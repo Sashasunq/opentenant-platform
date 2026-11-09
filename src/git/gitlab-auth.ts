@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import ClientOAuth2 from 'client-oauth2';
-import { PLATFORM_HOST } from './config';
+import { PLATFORM_HOST } from '../config';
 
 // Allow self-hosted GitLab instances
 export const GITLAB_HOST = process.env.GITLAB_HOST ?? 'https://gitlab.com';

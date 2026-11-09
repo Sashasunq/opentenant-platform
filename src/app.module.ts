@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { LoginController } from './login.controller';
-import { GitlabLoginController } from './gitlab.controller';
-import { GithubLoginController } from './github.controller';
-import { PipelineController } from './pipeline.controller';
-import { PipelineService } from './pipeline.service';
+import { AppController } from './supabase/supabase.controller';
+import { AppService } from './supabase/supabase.service';
+import { LoginController } from './supabase/login.controller';
+import { GitlabLoginController } from './git/gitlab.controller';
+import { GithubLoginController } from './git/github.controller';
+import { PipelineController } from './pipelines/pipeline.controller';
+import { PipelineService } from './pipelines/pipeline.service';
 import { WebhookController } from './webhook.controller';
 
 @Module({

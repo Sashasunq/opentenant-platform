@@ -5,17 +5,17 @@ import {
   vaultClientConfig,
   PLATFORM_HOST,
   TENANT_WORKER_LOGIN,
-} from './config';
+} from '../config';
 import ClientOAuth2 from 'client-oauth2';
 import * as vault from 'vault-client-typescript';
-import { applyMigrationDTO, SupabaseSession, SupabaseTenant } from './types';
+import { applyMigrationDTO, SupabaseSession, SupabaseTenant } from '../types';
 import { SupabaseManagementAPI } from 'supabase-management-js';
 import {
   createPostgresCredentials,
   createPostgresqlQueryForCredentials,
   generateSecurePassword,
   initSql,
-} from './utils';
+} from '../utils';
 import { getProject } from './supabase';
 
 const secretsClient = new vault.SecretsApi(vaultClientConfig);

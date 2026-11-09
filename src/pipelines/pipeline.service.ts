@@ -6,19 +6,19 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import * as vault from 'vault-client-typescript';
-import { vaultClientConfig } from './config';
+import { vaultClientConfig } from '../config';
 import {
   CreatePipelineDTO,
   PipelineConfig,
   RepoSession,
   UpdatePipelineDTO,
   Platform,
-} from './types';
-import { getGitAdapter, DirEntry } from './git-clients';
+} from '../types';
+import { getGitAdapter, DirEntry } from '../git/git-clients';
 import ClientOAuth2 from 'client-oauth2';
-import { createInstallationAccessToken } from './github-auth';
-import { gitlabOAuthClient } from './gitlab-auth';
-import { AppService } from './app.service'; // <-- import AppService
+import { createInstallationAccessToken } from '../git/github-auth';
+import { gitlabOAuthClient } from '../git/gitlab-auth';
+import { AppService } from '../supabase/supabase.service'; // <-- import AppService
 
 const secretsClient = new vault.SecretsApi(vaultClientConfig);
 

@@ -1,6 +1,6 @@
 import ClientOAuth2 from 'client-oauth2';
 import jwt from 'jsonwebtoken';
-import { PLATFORM_HOST } from './config';
+import { PLATFORM_HOST } from '../config';
 import * as fs from 'fs';
 import * as path from 'path';
 

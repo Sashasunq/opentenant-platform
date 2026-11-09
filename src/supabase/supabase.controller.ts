@@ -9,15 +9,15 @@ import {
   Session,
   UseGuards,
 } from '@nestjs/common';
-import { AppService } from './app.service';
+import { AppService } from './supabase.service';
 import ClientOAuth2 from 'client-oauth2';
-import { config, supabaseEnv } from './config';
+import { config, supabaseEnv } from '../config';
 import {
   SupabaseSession,
   SupabaseTenantDTO,
   ConnectRedirectResponseDTO,
   applyMigrationDTO,
-} from './types';
+} from '../types';
 
 import { withSupabase, SupabaseCtx } from '@supabase/server/adapters/nestjs';
 import type { SupabaseContext } from '@supabase/server';

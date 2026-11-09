@@ -1,4 +1,4 @@
-import { Platform } from './types';
+import { Platform } from '../types';
 
 export interface GitFile {
   content: string;
