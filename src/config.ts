@@ -37,7 +37,9 @@ export const SUPABASE_JWKS_URL = process.env.SUPABASE_JWKS_URL as string;
 export const FFMPEGLAB_PLATFORM_PORT =
   process.env.FFMPEGLAB_PLATFORM_PORT ?? 7001;
 
-export const profileUri = SUPABASE_PLATFORM + 'v1/organizations';
+export const organizationsUri = SUPABASE_PLATFORM + 'v1/organizations';
+
+export const profileUri = SUPABASE_PLATFORM + 'v1/profile';
 
 export const vaultClientConfig = new vault.Configuration({
   basePath: process.env.VAULT_URL,
