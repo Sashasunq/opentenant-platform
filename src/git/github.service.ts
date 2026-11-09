@@ -25,7 +25,9 @@ export class GithubService {
         Accept: 'application/vnd.github+json',
       },
     });
+
     const profile = await ghRes.json();
+
     console.log('[github/callback] 📦 Profile:', profile);
 
     const emailsRes = await fetch('https://api.github.com/user/emails', {
