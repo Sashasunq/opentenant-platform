@@ -15,7 +15,6 @@ import { supabaseEnv, config, WEBAPP_BASE } from '../config';
 import { ConnectRedirectResponseDTO } from '../types';
 import {
   GITHUB_APP_SLUG,
-  createInstallationAccessToken,
   githubOAuthClient,
 } from './github-auth';
 import { GithubService } from './github.service';
