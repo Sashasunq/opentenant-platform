@@ -39,11 +39,12 @@ export class GithubService {
 
     const emails = (await emailsRes.json()) as string[];
 
-    emails.push(email1);
-
+    if(email1)
+      emails.push(email1);
+    
     const existingUser: Users | null = (
       await Promise.all(
-        emails.map((email) => this.userRepo.findOneBy({ email })),
+        emails.filter(i=>i).map((email) => this.userRepo.findOneBy({ email })),
       )
     ).filter((i) => i)?.[0];
 
