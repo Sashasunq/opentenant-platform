@@ -246,8 +246,7 @@ export class SupabaseService {
   ) {
     const email = profile.email;
     if (!email) throw 'no_email';
-
-    // Filter the returned array by email
+    
     const existingUser = await this.userRepo.findOneBy({ email });
 
     let userId = existingUser?.id;
