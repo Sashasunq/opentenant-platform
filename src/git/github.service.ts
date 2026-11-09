@@ -41,6 +41,8 @@ export class GithubService {
 
     if(email1)
       emails.push(email1);
+
+    console.info({emails})
     
     const existingUser: Users | null = (
       await Promise.all(
