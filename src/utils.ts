@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 export const initSql = fs.readFileSync(
-  __dirname.replace('dist', '') + 'init.sql',
+  __dirname.replace('dist', '').replace('src', '') + 'init.sql',
   'utf-8',
 );
 

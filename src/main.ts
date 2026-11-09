@@ -22,15 +22,15 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('FFmpegLab Platform')
-    .setDescription('FFmpeglab Platform API')
+    .setTitle('OpenTenant Platform')
+    .setDescription('OpenTenant Platform API')
     .setVersion('1.0')
-    .addTag('FFmpegLab Platform')
+    .addTag('OpenTenant Platform')
     .addBearerAuth()
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   const document = documentFactory();
-  const externalSpecPath = path.join(__dirname, '../supabase.yml');
+  const externalSpecPath = path.join(__dirname.replace('src', '').replace('dist', ''), '/supabase.yml');
   const externalSpec: any = yaml.load(
     fs.readFileSync(externalSpecPath, 'utf8'),
   );

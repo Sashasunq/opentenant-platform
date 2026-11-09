@@ -1,7 +1,6 @@
 import ClientOAuth2 from 'client-oauth2';
 import { SupabaseManagementAPI } from 'supabase-management-js';
-import { profileUri, SUPABASE_PLATFORM } from './config';
-import { SupabaseProfile } from './types';
+import { profileUri, SUPABASE_PLATFORM } from '../config';
 
 export const getProject = async (
   supaManagementClient: SupabaseManagementAPI,

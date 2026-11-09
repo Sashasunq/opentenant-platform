@@ -13,9 +13,9 @@ import type { SupabaseContext } from '@supabase/server';
 import { User } from '@supabase/supabase-js';
 import * as crypto from 'crypto';
 
-import { supabaseEnv, config, WEBAPP_BASE } from './config';
-import { ConnectRedirectResponseDTO } from './types';
-import { PipelineService } from './pipeline.service';
+import { supabaseEnv, config, WEBAPP_BASE } from '../config';
+import { ConnectRedirectResponseDTO } from '../types';
+import { PipelineService } from '../pipelines/pipeline.service';
 import { GITLAB_HOST, gitlabOAuthClient } from './gitlab-auth';
 
 @Controller('git')
@@ -83,6 +83,7 @@ export class GitlabLoginController {
       const {
         data: { users },
       } = await ctx.supabaseAdmin.auth.admin.listUsers();
+
       let userId = users.find((u: User) => u.email === email)?.id;
 
       if (!userId) {

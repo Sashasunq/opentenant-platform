@@ -13,13 +13,13 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { withSupabase, SupabaseCtx } from '@supabase/server/adapters/nestjs';
-import { supabaseEnv } from './config';
-import { CreatePipelineDTO, PipelineConfig, UpdatePipelineDTO } from './types';
+import { supabaseEnv } from '../config';
+import { CreatePipelineDTO, PipelineConfig, UpdatePipelineDTO } from '../types';
 import { PipelineService } from './pipeline.service';
-import { getGitAdapter } from './git-clients';
-import type { Platform } from './types';
-import { githubOAuthClient } from './github-auth';
-import { gitlabOAuthClient } from './gitlab-auth';
+import { getGitAdapter } from '../git/git-clients';
+import type { Platform } from '../types';
+import { githubOAuthClient } from '../git/github-auth';
+import { gitlabOAuthClient } from '../git/gitlab-auth';
 
 @Controller('git')
 @UseGuards(withSupabase({ auth: 'user', env: supabaseEnv }))

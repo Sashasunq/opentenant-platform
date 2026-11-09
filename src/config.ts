@@ -1,4 +1,5 @@
 import * as vault from 'vault-client-typescript';
+import { Users } from './model/user.entity';
 
 export const SUPABASE_PLATFORM = 'https://api.supabase.com/';
 
@@ -6,6 +7,16 @@ export const PLATFORM_HOST = process.env.PLATFORM_HOST as string;
 export const WEBAPP_BASE = process.env.WEBAPP_HOST as string; // e.g. https://app.ffmpeglab.com
 
 export const config = {
+  db: {
+    host: process.env.DB_HOST,
+    port: parseInt(process.env.DB_PORT || '5432', 10),
+    username: process.env.DB_USER,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    entities: [Users],
+    synchronize: false,
+  },
   clientId: process.env.SUPA_CONNECT_CLIENT_ID,
   clientSecret: process.env.SUPA_CONNECT_CLIENT_SECRET,
   authorizationUri: 'https://api.supabase.com/v1/oauth/authorize',

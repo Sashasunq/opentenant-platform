@@ -1,23 +1,33 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { LoginController } from './login.controller';
-import { GitlabLoginController } from './gitlab.controller';
-import { GithubLoginController } from './github.controller';
-import { PipelineController } from './pipeline.controller';
-import { PipelineService } from './pipeline.service';
+import { SupabaseController } from './supabase/supabase.controller';
+import { SupabaseService } from './supabase/supabase.service';
+import { LoginController } from './supabase/login.controller';
+import { GitlabLoginController } from './git/gitlab.controller';
+import { GithubLoginController } from './git/github.controller';
+import { PipelineController } from './pipelines/pipeline.controller';
+import { PipelineService } from './pipelines/pipeline.service';
 import { WebhookController } from './webhook.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import {config} from './config';
+import { GithubService } from './git/github.service';
+import { Users } from './model/user.entity';
 
 @Module({
-  imports: [],
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      ...config.db,
+    }),
+    TypeOrmModule.forFeature([Users]),
+  ],
   controllers: [
-    AppController,
+    SupabaseController,
     LoginController,
     GitlabLoginController,
     GithubLoginController,
     PipelineController,
     WebhookController,
   ],
-  providers: [AppService, PipelineService],
+  providers: [SupabaseService, PipelineService, GithubService],
 })
 export class AppModule {}

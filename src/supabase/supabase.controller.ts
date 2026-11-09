@@ -9,15 +9,15 @@ import {
   Session,
   UseGuards,
 } from '@nestjs/common';
-import { AppService } from './app.service';
+import { SupabaseService } from './supabase.service';
 import ClientOAuth2 from 'client-oauth2';
-import { config, supabaseEnv } from './config';
+import { config, supabaseEnv } from '../config';
 import {
   SupabaseSession,
   SupabaseTenantDTO,
   ConnectRedirectResponseDTO,
   applyMigrationDTO,
-} from './types';
+} from '../types';
 
 import { withSupabase, SupabaseCtx } from '@supabase/server/adapters/nestjs';
 import type { SupabaseContext } from '@supabase/server';
@@ -38,8 +38,8 @@ const oauth2Client = new ClientOAuth2(config);
   }),
 )
 @ApiBearerAuth('user')
-export class AppController {
-  constructor(private readonly appService: AppService) {}
+export class SupabaseController {
+  constructor(private readonly appService: SupabaseService) {}
 
   @Get('platform/me')
   @ApiResponse({ type: SupabaseCtx['userClaims'] })
