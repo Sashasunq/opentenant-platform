@@ -24,8 +24,7 @@ export const config = {
   redirectUri: PLATFORM_HOST + '/platform/oauth2/callback',
   supabaseConnectRedirect:
     process.env.WEBAPP_HOST + '/pipelines?showPipelineTemplates=true',
-  gitConnectRedirect:
-    process.env.WEBAPP_HOST + '/editor',
+  gitConnectRedirect: process.env.WEBAPP_HOST + '/editor',
 };
 
 export const TENANT_WORKER_LOGIN = 'worker@ffmpeglab.com';
