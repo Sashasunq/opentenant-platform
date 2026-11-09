@@ -36,7 +36,7 @@ export class GithubService {
       },
     });
 
-    const emails:{email:string}[] = (await emailsRes.json())
+    const emails:{email:string, verified:boolean, primary:boolean}[] = (await emailsRes.json())
 
     console.info({emails})
     
@@ -50,8 +50,8 @@ export class GithubService {
 
     if (!userId) {
       const primaryEmail =
-        emails.find((e: any) => e.primary) ||
-        emails.find((e: any) => e.verified);
+        emails.find((e) => e.primary) ||
+        emails.find((e) => e.verified);
 
       const { data: newUser, error } =
         await ctx.supabaseAdmin.auth.admin.createUser({
