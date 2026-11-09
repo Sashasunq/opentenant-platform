@@ -13,10 +13,7 @@ import type { SupabaseContext } from '@supabase/server';
 
 import { supabaseEnv, config, WEBAPP_BASE } from '../config';
 import { ConnectRedirectResponseDTO } from '../types';
-import {
-  GITHUB_APP_SLUG,
-  githubOAuthClient,
-} from './github-auth';
+import { GITHUB_APP_SLUG, githubOAuthClient } from './github-auth';
 import { GithubService } from './github.service';
 
 @Controller('git')

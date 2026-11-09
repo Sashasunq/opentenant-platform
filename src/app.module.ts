@@ -8,7 +8,7 @@ import { PipelineController } from './pipelines/pipeline.controller';
 import { PipelineService } from './pipelines/pipeline.service';
 import { WebhookController } from './webhook.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import {config} from './config';
+import { config } from './config';
 import { GithubService } from './git/github.service';
 import { Users } from './model/user.entity';
 

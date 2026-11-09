@@ -30,7 +30,10 @@ async function bootstrap() {
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   const document = documentFactory();
-  const externalSpecPath = path.join(__dirname.replace('src', '').replace('dist', ''), '/supabase.yml');
+  const externalSpecPath = path.join(
+    __dirname.replace('src', '').replace('dist', ''),
+    '/supabase.yml',
+  );
   const externalSpec: any = yaml.load(
     fs.readFileSync(externalSpecPath, 'utf8'),
   );

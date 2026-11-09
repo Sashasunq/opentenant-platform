@@ -28,7 +28,6 @@ export class GithubService {
     const profile = await ghRes.json();
     console.log('[github/callback] 📦 Profile:', profile);
 
-
     const emailsRes = await fetch('https://api.github.com/user/emails', {
       headers: {
         Authorization: `Bearer ${oauthSession.accessToken}`,
@@ -36,10 +35,11 @@ export class GithubService {
       },
     });
 
-    const emails:{email:string, verified:boolean, primary:boolean}[] = (await emailsRes.json())
+    const emails: { email: string; verified: boolean; primary: boolean }[] =
+      await emailsRes.json();
 
-    console.info({emails})
-    
+    console.info({ emails });
+
     const existingUser: Users | null = (
       await Promise.all(
         emails.map((e) => this.userRepo.findOneBy({ email: e.email })),
@@ -50,8 +50,7 @@ export class GithubService {
 
     if (!userId) {
       const primaryEmail =
-        emails.find((e) => e.primary) ||
-        emails.find((e) => e.verified);
+        emails.find((e) => e.primary) || emails.find((e) => e.verified);
 
       const { data: newUser, error } =
         await ctx.supabaseAdmin.auth.admin.createUser({
