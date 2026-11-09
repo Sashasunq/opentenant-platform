@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-
-import { config } from '../config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Users } from '../model/user.entity';
 import { Repository } from 'typeorm';
@@ -33,55 +31,34 @@ export class GithubService {
     console.log('[github/callback] 📦 Profile:', profile);
 
     // 2. Try to get email from the profile
-    let email = profile.email;
+    let email1 = profile.email;
 
-    // 3. If missing, try /user/emails
-    if (!email) {
-      console.log(
-        '[github/callback] 🔍 Email missing in profile, fetching from /user/emails...',
-      );
-      const emailsRes = await fetch('https://api.github.com/user/emails', {
-        headers: {
-          Authorization: `Bearer ${oauthSession.accessToken}`,
-          Accept: 'application/vnd.github+json',
-        },
-      });
+    const emailsRes = await fetch('https://api.github.com/user/emails', {
+      headers: {
+        Authorization: `Bearer ${oauthSession.accessToken}`,
+        Accept: 'application/vnd.github+json',
+      },
+    });
 
-      if (!emailsRes.ok) {
-        console.error(
-          '[github/callback] ❌ /user/emails returned status:',
-          emailsRes.status,
-        );
-        if (emailsRes.status === 403) {
-          throw new Error(
-            'Email is private or scope missing – please set a public email in your GitHub profile.',
-          );
-        }
-        throw new Error(`/user/emails API error: ${emailsRes.status}`);
-      }
+    const emails = (await emailsRes.json()) as string[];
 
-      const emails = await emailsRes.json();
-      if (!Array.isArray(emails)) {
-        throw new Error('Invalid response from /user/emails');
-      }
-      const primaryEmail =
-        emails.find((e: any) => e.primary) ||
-        emails.find((e: any) => e.verified);
-      email = primaryEmail?.email;
-    }
-
-    if (!email) throw new Error('no_email_found');
-    console.log('[github/callback] 📧 Final email:', email);
-
+    emails.push(email1);
     // 4. Find or create Supabase user by email
-    const existingUser = await this.userRepo.findOneBy({ email });
+    const existingUser: Users | null = (
+      await Promise.all(
+        emails.map((email) => this.userRepo.findOneBy({ email })),
+      )
+    )?.[0];
     let userId = existingUser?.id;
 
     if (!userId) {
+      const primaryEmail =
+        emails.find((e: any) => e.primary) ||
+        emails.find((e: any) => e.verified);
       console.log('[github/callback] 👤 Creating new user...');
       const { data: newUser, error } =
         await ctx.supabaseAdmin.auth.admin.createUser({
-          email,
+          email: primaryEmail,
           email_confirm: true,
           user_metadata: { name: profile.login, github_login: profile.login },
         });
@@ -96,18 +73,5 @@ export class GithubService {
     console.log('[github/callback] 💾 Saving GitHub session...');
     await this.pipelineService.saveGitHubSession(userId, oauthSession);
     console.log('[github/callback] ✅ Session saved');
-
-    let redirectUrl: string;
-    if (projectId) {
-      redirectUrl = `${WEBAPP_BASE}/pipelines/pipeline/${projectId}/settings?github=connected`;
-      console.log(
-        `[github/callback] 🔀 Redirecting to project settings: ${redirectUrl}`,
-      );
-    } else {
-      redirectUrl = `${config.webAppRedirect}?github=connected`;
-      console.log(
-        `[github/callback] 🔀 Redirecting to default: ${redirectUrl}`,
-      );
-    }
   }
 }
