@@ -348,7 +348,7 @@ Two operators appear in this document, for two different deployments, and each c
 | Deployment | Who installs the release | Operator that writes the Secret |
 |---|---|---|
 | Many tenants, driven by the registry | [Tenant sync](#tenant-sync--terraform--eso) in this repository | **External Secrets Operator (ESO)** — one `ExternalSecret` per tenant |
-| One instance, on-prem | `deploy/deploy.sh` in [ffmpeglab/server](https://github.com/ffmpeglab/server/tree/main/deploy) | **Vault Secrets Operator (VSO)** — one `VaultStaticSecret` |
+| One instance, on-prem | by hand, per `deploy/vso/README.md` in [ffmpeglab/server](https://github.com/ffmpeglab/server/tree/main/deploy) | **Vault Secrets Operator (VSO)** — one `VaultStaticSecret` |
 
 Either way the Secret is the contract: the chart reads it through `envFrom` and never sees Vault. **[Reloader](https://github.com/stakater/Reloader)** watches those Secrets and rolls the workloads automatically whenever a tenant's credentials change — no manual restarts, no stale credentials.
 
@@ -379,9 +379,8 @@ This closes the credential-rotation loop end to end:
 | **Tenant sync** | Turning registry entries into namespaces, ExternalSecrets and releases |
 | **ESO / VSO** | Reading the tenant record from Vault, producing the Secret |
 | **Reloader** | Watching that Secret, rolling workloads when it changes |
-| **The chart** | Deployments, Service, storage, health checks |
-| **deploy.sh** | Single-instance install with VSO (ffmpeglab/server) |
-| **Cluster owner** | The cluster itself, and storage that supports it |
+| **The chart** | Deployments, Service, health checks |
+| **Cluster owner** | The cluster itself |
 
 > The FFmpegLab deployment never creates a tenant. It receives one — and re-receives it automatically whenever it changes.
 
@@ -546,7 +545,7 @@ Once per cluster, installed by whoever administers it:
 5. **A published chart.** The module installs `chart_name` at an exact `chart_version` from
    `chart_repository`, preferably an OCI registry. The FFmpegLab chart lives in
    `ffmpeglab/server` under `deploy/helm/ffmpeglab` and is **not published anywhere yet** —
-   publishing it, 0.7.0 or later for the Reloader annotation, is a required step before the
+   publishing it, 0.8.0 or later, is a required step before the
    sync can install anything.
 
 Run them in this order: Terraform plans against the `ExternalSecret` CRD, so ESO must exist first.
@@ -621,7 +620,7 @@ only marks the latest version deleted, so the key is still listed and ESO keeps 
 
 ### Wiring Reloader into the workload
 
-The chart (0.7.0 and later) annotates each Deployment so Reloader picks up changes to the tenant Secret. The annotation comes from the chart's `deploymentAnnotations` value, and the tenant sync sets it explicitly as well. It belongs on the Deployment, not the pod template — Reloader reads the Deployment:
+The chart (0.8.0 and later) annotates each Deployment so Reloader picks up changes to the tenant Secret. The annotation comes from the chart's `deploymentAnnotations` value, and the tenant sync sets it explicitly as well. It belongs on the Deployment, not the pod template — Reloader reads the Deployment:
 
 ```yaml
 apiVersion: apps/v1
@@ -653,7 +652,7 @@ Notes:
 
 The application binds one process to one database connection and one queue at startup. It cannot serve two databases. Multi-tenancy therefore lives in the deployment layer: another tenant means another release of the same chart, not a configuration change inside a running one. That is why the chart knows nothing about tenants – it takes its credentials from a Secret that the operator produced from the record this platform wrote, and Reloader keeps it current.
 
-See `deploy/README.md` in the server repository for the runtime architecture (api / render / logs roles, pgmq queues, the render document volume).
+The chart is `deploy/helm/ffmpeglab` in the server repository: api, render and logs, no volumes.
 
 ---
 

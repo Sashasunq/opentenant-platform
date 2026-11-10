@@ -74,12 +74,12 @@ variable "chart_name" {
 }
 
 variable "chart_version" {
-  description = "Exact chart version; 0.7.0 or later carries the Reloader annotation support."
+  description = "Exact chart version, 0.8.0 or later."
   type        = string
 
   validation {
     condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+", var.chart_version))
-    error_message = "chart_version must be an exact version such as 0.7.0, not a range."
+    error_message = "chart_version must be an exact version such as 0.8.0, not a range."
   }
 }
 
