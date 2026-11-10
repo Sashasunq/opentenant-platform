@@ -653,7 +653,7 @@ Notes:
 
 The application binds one process to one database connection and one queue at startup. It cannot serve two databases. Multi-tenancy therefore lives in the deployment layer: another tenant means another release of the same chart, not a configuration change inside a running one. That is why the chart knows nothing about tenants – it takes its credentials from a Secret that the operator produced from the record this platform wrote, and Reloader keeps it current.
 
-See `deploy/docs/architecture.md` in the server repository for the full runtime architecture (api / render / file / logs roles, pgmq queues, shared document directory).
+See `deploy/README.md` in the server repository for the runtime architecture (api / render / logs roles, pgmq queues, the render document volume).
 
 ---
 
