@@ -13,7 +13,7 @@ A secure, idempotent foundation for building Supabase extensions that require Va
 
 This template handles platform user authentication via Supabase Auth, OAuth2 Connect to let users bring their own Supabase projects, provisions dedicated database users per tenant, stores all secrets in HashiCorp Vault, provides an omnidempotent API layer, and exposes REST endpoints for organizations, projects, tenant status, and the OAuth2 flow – ready to use out of the box.
 
-The platform is also the **tenant provisioning authority** for FFmpegLab's Kubernetes deployment: it writes tenant records into Vault, which the [Vault Secrets Operator](#kubernetes-deployment--vso--reloader) turns into cluster Secrets consumed by one Helm release per tenant — with [Reloader](https://github.com/stakater/Reloader) ensuring pods roll automatically whenever a tenant's credentials rotate.
+The platform is also the **tenant provisioning authority** for FFmpegLab's Kubernetes deployment: it writes tenant records into Vault, which a secrets operator — [External Secrets Operator](#tenant-sync--terraform--eso) for the platform's tenant sync, or the [Vault Secrets Operator](#kubernetes-deployment--secrets-operator--reloader) for a single instance — turns into cluster Secrets consumed by one Helm release per tenant — with [Reloader](https://github.com/stakater/Reloader) ensuring pods roll automatically whenever a tenant's credentials rotate.
 
 Originaly this template was built for ffmpeglab so ffmpeglab can be here and there as example of tenant
 
@@ -71,16 +71,16 @@ What it gives you:
 │  secret/users/{userId}/key           → tenant service key               │
 │  secret/tenants/{userId}/{projectId} → Tenant records & DB creds        │
 └──────────────────────────────┬──────────────────────────────────────────┘
-                               │ read-only (VSO policy)
+                               │ read-only (operator policy)
                                ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │              Kubernetes — one Helm release per tenant                   │
 │                                                                         │
-│   VSO ──writes──▶ K8s Secret ──watched by──▶ Reloader                   │
+│   ESO/VSO ──writes──▶ K8s Secret ──watched by──▶ Reloader               │
 │                                                 │ secret changed        │
 │                                                 ▼                       │
 │                              ffmpeglab/server pods                      │
-│                     (api / render / file / logs) rolled automatically   │
+│                       (api / render / logs) rolled automatically        │
 └─────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -192,7 +192,7 @@ All secrets are stored at paths scoped to the platform `userId`:
 | `secret/users/{userId}/key` | `{ secretKey }` – service auth key |
 | `secret/tenants/{userId}/{projectId}` | Full tenant record incl. DB creds, anon key, `TENANT_SECRET_KEY`, S3 config |
 
-The tenant record is the contract between this platform and everything downstream (VSO, Reloader, Helm chart):
+The tenant record is the contract between this platform and everything downstream (ESO or VSO, Reloader, Helm chart):
 
 ```json
 {
@@ -309,7 +309,7 @@ SUPABASE_CLOUD_POSTGRES_POOLER_PORT=6543
   - **Platform Supabase** – handles authentication for your extension's users.
   - **External Supabase** – the user's own project (connected via OAuth2).
 - Supabase Connect configured for OAuth2.
-- For cluster deployment: a Kubernetes cluster with VSO and Reloader installed (see below).
+- For cluster deployment: a Kubernetes cluster with ESO (or VSO) and Reloader installed (see below).
 
 ### Installation
 
@@ -339,9 +339,18 @@ npm test
 
 ---
 
-## Kubernetes Deployment — VSO + Reloader
+## Kubernetes Deployment — secrets operator + Reloader
 
-The platform does not deploy workloads itself. It writes tenant records into Vault; the **Vault Secrets Operator (VSO)** reads them and produces Kubernetes Secrets; one Helm release of the FFmpegLab server runs per tenant. **[Reloader](https://github.com/stakater/Reloader)** watches those Secrets and rolls the workloads automatically whenever a tenant's credentials change — no manual restarts, no stale credentials.
+The platform API does not deploy workloads itself. It writes tenant records into Vault; a secrets operator reads them and produces Kubernetes Secrets; one Helm release of the FFmpegLab server runs per tenant.
+
+Two operators appear in this document, for two different deployments, and each cluster uses one:
+
+| Deployment | Who installs the release | Operator that writes the Secret |
+|---|---|---|
+| Many tenants, driven by the registry | [Tenant sync](#tenant-sync--terraform--eso) in this repository | **External Secrets Operator (ESO)** — one `ExternalSecret` per tenant |
+| One instance, on-prem | `deploy/deploy.sh` in [ffmpeglab/server](https://github.com/ffmpeglab/server/tree/main/deploy) | **Vault Secrets Operator (VSO)** — one `VaultStaticSecret` |
+
+Either way the Secret is the contract: the chart reads it through `envFrom` and never sees Vault. **[Reloader](https://github.com/stakater/Reloader)** watches those Secrets and rolls the workloads automatically whenever a tenant's credentials change — no manual restarts, no stale credentials.
 
 ```
 Platform                Vault                Cluster
@@ -349,7 +358,7 @@ Platform                Vault                Cluster
    │ createTenant()       │                      │
    │─────────────────────▶│ write tenants/{u}/{p}│
    │                      │                      │
-   │                      │◀── auth (K8s SA) ────│ VSO
+   │                      │◀── auth (K8s SA) ────│ ESO / VSO
    │                      │── tenant JSON ──────▶│ K8s Secret
    │                      │                      │
    │                      │                      │ Reloader watches Secret
@@ -360,17 +369,18 @@ Platform                Vault                Cluster
 
 This closes the credential-rotation loop end to end:
 
-> Platform rotates a tenant's credentials in Vault → VSO updates the K8s Secret → Reloader detects the change → pods roll → the instance is running with fresh credentials. Zero manual intervention.
+> Platform rotates a tenant's credentials in Vault → the operator updates the K8s Secret → Reloader detects the change → pods roll → the instance is running with fresh credentials. No `terraform apply` or `helm upgrade` is involved.
 
 ### Responsibility boundary
 
 | Owns | What |
 |---|---|
 | **This platform** | Creating tenants, writing their records into Vault |
-| **VSO** | Reading the tenant record from Vault, producing the Secret |
+| **Tenant sync** | Turning registry entries into namespaces, ExternalSecrets and releases |
+| **ESO / VSO** | Reading the tenant record from Vault, producing the Secret |
 | **Reloader** | Watching that Secret, rolling workloads when it changes |
 | **The chart** | Deployments, Service, storage, health checks |
-| **deploy.sh** | Applying operator resources and installing the chart |
+| **deploy.sh** | Single-instance install with VSO (ffmpeglab/server) |
 | **Cluster owner** | The cluster itself, and storage that supports it |
 
 > The FFmpegLab deployment never creates a tenant. It receives one — and re-receives it automatically whenever it changes.
@@ -444,65 +454,180 @@ vault write auth/kubernetes/role/ffmpeglab \
   ttl=1h
 ```
 
-### To run the TF you would need to setup also the External Secrets Operator (ESO)
-
-First we need a role
-```sh
-vault write auth/kubernetes/role/external-secrets \
-  bound_service_account_names=external-secrets \
-  bound_service_account_namespaces=external-secrets \
-  policies=ffmpeglab-tenants \
-  ttl=1h
-```
-
-Then lets install the module
-```sh
-helm repo add external-secrets https://charts.external-secrets.io 2>/dev/null
-helm repo update
-
-helm install external-secrets external-secrets/external-secrets \
-  --namespace external-secrets --create-namespace \
-  --version 2.9.0 \
-  --set installCRDs=true
-```
-
-add this chart
-```yml
-apiVersion: external-secrets.io/v1
-kind: ClusterSecretStore
-metadata:
-  name: vault-backend
-spec:
-  provider:
-    vault:
-      server: https://vault.ffmpeglab.com   # no trailing slash
-#      caBundle: <base64 CA cert>                   # only if self-signed TLS
-      path: secret                                 # KV v2 mount name
-      version: v2
-      auth:
-        kubernetes:
-          mountPath: kubernetes                    # where kubernetes auth is enabled
-          role: external-secrets
-```
-
-we apply it and check the store
-```sh
-kubectl apply -f external-secrets.yml
-kubectl get clustersecretstore vault-backend    # wait for STATUS: True
-```
-
-
 Both belong to whoever administers Vault — a deploy-time role cannot enable auth methods.
+
+### Tenant sync — Terraform + ESO
+
+`deploy/tenant-sync/` turns the Vault registry into running tenants. Every record at
+`secret/tenants/<userId>/<projectId>` becomes a namespace `ffmpeglab-<projectId>`, an
+`ExternalSecret` and a Helm release; removing the record tears all three down on the next run.
+
+```
+Vault registry ──list──▶ tenant sync (CronJob) ──creates──▶ namespace · ExternalSecret · helm release
+      │                                                              │
+      └──────────── ESO reads the record ──▶ Secret ◀── Reloader watches, rolls on change
+```
+
+Terraform only lists the registry. It never reads a record, so no credential value reaches
+Terraform state: the state holds paths, names and the chart values below, nothing else. ESO
+fetches the record inside the cluster, and a rotation reaches the pods within
+`secret_refresh_interval` without the sync running at all.
+
+#### Prerequisites
+
+Once per cluster, installed by whoever administers it:
+
+1. **External Secrets Operator** with a Vault role of its own:
+
+   ```sh
+   vault write auth/kubernetes/role/external-secrets \
+     bound_service_account_names=external-secrets \
+     bound_service_account_namespaces=external-secrets \
+     policies=ffmpeglab-tenants \
+     ttl=1h
+
+   helm repo add external-secrets https://charts.external-secrets.io
+   helm install external-secrets external-secrets/external-secrets \
+     --namespace external-secrets --create-namespace \
+     --version 2.9.0 \
+     --set installCRDs=true
+   ```
+
+   and the `ClusterSecretStore` the tenants reference (`cluster_secret_store_name`):
+
+   ```yaml
+   apiVersion: external-secrets.io/v1
+   kind: ClusterSecretStore
+   metadata:
+     name: vault-backend
+   spec:
+     provider:
+       vault:
+         server: https://vault.ffmpeglab.com   # no trailing slash
+   #     caBundle: <base64 CA cert>            # only if self-signed TLS
+         path: secret                          # KV v2 mount name
+         version: v2
+         auth:
+           kubernetes:
+             mountPath: kubernetes
+             role: external-secrets
+   ```
+
+   ```sh
+   kubectl apply -f external-secrets.yml
+   kubectl get clustersecretstore vault-backend    # wait for STATUS: True
+   ```
+
+2. **Reloader**, as under [Installing the operators](#installing-the-operators).
+
+3. **A Vault role for the sync** that can list the registry and nothing more:
+
+   ```sh
+   vault policy write tenant-sync - <<'HCL'
+   path "secret/metadata/tenants"   { capabilities = ["list"] }
+   path "secret/metadata/tenants/*" { capabilities = ["list"] }
+   HCL
+
+   vault write auth/kubernetes/role/tenant-sync \
+     bound_service_account_names=tenant-sync \
+     bound_service_account_namespaces=platform-system \
+     policies=tenant-sync \
+     ttl=15m
+   ```
+
+4. **The registry marker.** `vault_kv_secrets_list_v2` fails on an empty path rather than
+   returning nothing, which would make removing the last tenant impossible. A leaf key keeps
+   the listing non-empty; the module ignores it:
+
+   ```sh
+   vault kv put -mount=secret tenants/_registry purpose=keeps-the-tenant-listing-non-empty
+   ```
+
+5. **A published chart.** The module installs `chart_name` at an exact `chart_version` from
+   `chart_repository`, preferably an OCI registry. The FFmpegLab chart lives in
+   `ffmpeglab/server` under `deploy/helm/ffmpeglab` and is **not published anywhere yet** —
+   publishing it, 0.7.0 or later for the Reloader annotation, is a required step before the
+   sync can install anything.
+
+Run them in this order: Terraform plans against the `ExternalSecret` CRD, so ESO must exist first.
+
+#### Running it in the cluster
+
+The sync runs as a CronJob in `platform-system`, every five minutes, one run at a time. It logs
+in to Vault with the ServiceAccount token the kubelet projects into the pod. That token rotates
+on its own and is read fresh on every run; no copy is written anywhere and no Vault token is
+stored. State lives in a Secret in the same namespace through the `kubernetes` backend.
+
+```sh
+kubectl apply -f deploy/tenant-sync/k8s/rbac.yaml
+
+kubectl create configmap tenant-sync-tf -n platform-system \
+  --from-file=deploy/tenant-sync/
+
+kubectl create configmap tenant-sync-vars -n platform-system \
+  --from-literal=TF_VAR_vault_address=https://vault.ffmpeglab.com \
+  --from-literal=TF_VAR_chart_repository=oci://<registry>/<namespace> \
+  --from-literal=TF_VAR_chart_version=<x.y.z>
+
+kubectl apply -f deploy/tenant-sync/k8s/cronjob.yaml
+```
+
+`--from-file` on a directory takes its files and skips `k8s/`, so the manifests stay out of
+the module. Re-create `tenant-sync-tf` after changing the module.
+
+The sync can create and delete namespaces and everything the chart puts in them, including
+Secrets, since Helm keeps release history there. That is what `rbac.yaml` grants; keep the
+ServiceAccount to this one job.
+
+#### Variables
+
+| Variable | Default | |
+|---|---|---|
+| `vault_address` | — | required |
+| `chart_repository` | — | required, e.g. `oci://registry.example.com/charts` |
+| `chart_version` | — | required, an exact version |
+| `chart_name` | `ffmpeglab` | |
+| `vault_role` | `tenant-sync` | |
+| `vault_auth_mount` | `kubernetes` | |
+| `vault_jwt_path` | the projected ServiceAccount token | |
+| `kube_config_path` | `null`, in-cluster | set when running outside the cluster |
+| `tenant_mount` / `tenant_prefix` | `secret` / `tenants` | |
+| `namespace_prefix` | `ffmpeglab-` | |
+| `secret_refresh_interval` | `5m` | how often ESO re-reads each record |
+| `cluster_secret_store_name` | `vault-backend` | |
+| `chart_values` | `{}` | merged over the defaults for every release |
+| `image_tag` | `""` | the chart's `appVersion` when empty |
+
+#### Checking the module without touching anything
+
+```sh
+cd deploy/tenant-sync
+terraform fmt -check
+terraform init -backend=false
+terraform validate
+```
+
+#### Removing a tenant
+
+`vault kv metadata delete -mount=secret tenants/<userId>/<projectId>`. A plain `vault kv delete`
+only marks the latest version deleted, so the key is still listed and ESO keeps failing to read it.
+
+#### Limits
+
+- The record's on/off flag (`ffmpeglabStatus`) is not honoured: reading it would put the record
+  into state. A tenant runs while its key exists.
+- Helm waits on the `ExternalSecret` becoming `Ready`. If the record is unreadable the release
+  is not installed and the run fails rather than leaving a crash-looping tenant.
 
 ### Wiring Reloader into the workload
 
-The chart annotates each Deployment so Reloader picks up changes to the tenant Secret:
+The chart (0.7.0 and later) annotates each Deployment so Reloader picks up changes to the tenant Secret. The annotation comes from the chart's `deploymentAnnotations` value, and the tenant sync sets it explicitly as well. It belongs on the Deployment, not the pod template — Reloader reads the Deployment:
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ffmpeglab-api
+  name: <slug>-ffmpeglab-api
   annotations:
     reloader.stakater.com/auto: "true"        # roll on any referenced Secret/ConfigMap change
 spec:
@@ -510,10 +635,10 @@ spec:
     spec:
       containers:
         - name: api
-          image: ffmpeglab/server:0.4.1
+          image: ffmpeglab/server:0.6.4
           envFrom:
             - secretRef:
-                name: ffmpeglab-tenant        # produced by VSO from the Vault record
+                name: <slug>-supabase         # written by ESO from the Vault record
 ```
 
 Notes:
@@ -526,7 +651,7 @@ Notes:
 
 ### One release = one instance
 
-The application binds one process to one database connection and one queue at startup. It cannot serve two databases. Multi-tenancy therefore lives in the deployment layer: another tenant means another release of the same chart, not a configuration change inside a running one. That is why the chart knows nothing about tenants – it takes its credentials from a Secret that VSO produced from the record this platform wrote, and Reloader keeps it current.
+The application binds one process to one database connection and one queue at startup. It cannot serve two databases. Multi-tenancy therefore lives in the deployment layer: another tenant means another release of the same chart, not a configuration change inside a running one. That is why the chart knows nothing about tenants – it takes its credentials from a Secret that the operator produced from the record this platform wrote, and Reloader keeps it current.
 
 See `deploy/docs/architecture.md` in the server repository for the full runtime architecture (api / render / file / logs roles, pgmq queues, shared document directory).
 
@@ -592,7 +717,7 @@ When deploying your own extension based on this template, point the `platform` u
 - **Add new endpoints** – create additional controllers.
 - **Adjust OAuth2 scopes** – modify the Supabase Connect request if you need more permissions.
 - **Extend tenant provisioning** – e.g., create custom schemas, set up RLS policies, or initialise tables when a tenant is created.
-- **Add tenant record fields** – any new field you write into the tenant record automatically reaches the deployed instance as an environment variable via VSO + `envFrom`, and Reloader will roll the pods when it changes.
+- **Add tenant record fields** – any new field you write into the tenant record automatically reaches the deployed instance as an environment variable via the operator + `envFrom`, and Reloader will roll the pods when it changes.
 
 ---
 
@@ -602,7 +727,7 @@ When deploying your own extension based on this template, point the `platform` u
 - **Zero secrets in app state** – all tokens and credentials live only in Vault; the API is stateless.
 - **Per-tenant isolation** – dedicated Postgres role per `(userId, projectId)` pair, scoped by the JWT-derived userId.
 - **Self-healing sessions** – expired OAuth tokens are transparently refreshed before any Management API call.
-- **Self-healing deployments** – credential rotation flows from Vault through VSO to Reloader-triggered rollouts without human action.
+- **Self-healing deployments** – credential rotation flows from Vault through ESO or VSO to Reloader-triggered rollouts without human action.
 - **Clean hand-off** – the tenant record in Vault is the single contract between provisioning (here) and deployment (Kubernetes).
 
 ---
