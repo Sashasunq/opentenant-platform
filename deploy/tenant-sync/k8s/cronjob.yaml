@@ -24,7 +24,7 @@ spec:
               args:
                 - |
                   set -e
-                  cp /module/* /workspace/
+                  cp /module/*.tf /module/.terraform.lock.hcl /workspace/
                   cd /workspace
                   terraform init -input=false
                   terraform apply -auto-approve -input=false
