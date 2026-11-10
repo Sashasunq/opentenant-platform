@@ -29,9 +29,6 @@ function encodeRepoKey(repoFullName: string): string {
   return Buffer.from(repoFullName, 'utf-8').toString('base64url');
 }
 
-function decodeRepoKey(key: string): string {
-  return Buffer.from(key, 'base64').toString('utf-8');
-}
 
 @Injectable()
 export class PipelineService {
@@ -216,6 +213,19 @@ export class PipelineService {
   }
 
   async getPipeline(
+    userId: string,
+    projectId: string,
+  ): Promise<PipelineConfig | undefined> {
+    try {
+      return (
+        await secretsClient.kvV2Read(this.kvPath(userId, projectId), 'secret')
+      ).data as PipelineConfig;
+    } catch {
+      return undefined;
+    }
+  }
+
+  async getPipelineBranch(
     userId: string,
     projectId: string,
   ): Promise<PipelineConfig | undefined> {
