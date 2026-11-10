@@ -15,16 +15,17 @@ data "vault_kv_secrets_list_v2" "projects" {
 locals {
   prefix = trim(var.tenant_prefix, "/")
 
+  # The provider marks names sensitive; they are paths, and for_each needs them plain.
+  user_names    = nonsensitive(data.vault_kv_secrets_list_v2.users.names)
+  project_names = { for user, list in data.vault_kv_secrets_list_v2.projects : user => nonsensitive(list.names) }
+
   # Directories only: the registry marker is a leaf and keeps the listing from ever being empty.
-  user_ids = [
-    for k in data.vault_kv_secrets_list_v2.users.names : trimsuffix(k, "/")
-    if endswith(k, "/")
-  ]
+  user_ids = [for k in local.user_names : trimsuffix(k, "/") if endswith(k, "/")]
 
   # Keyed by "<userId>/<projectId>", the path the platform writes.
   tenants = merge([
-    for user, list in data.vault_kv_secrets_list_v2.projects : {
-      for project in list.names : "${user}/${project}" => {
+    for user, names in local.project_names : {
+      for project in names : "${user}/${project}" => {
         slug      = lower(project)
         namespace = "${var.namespace_prefix}${lower(project)}"
       }
