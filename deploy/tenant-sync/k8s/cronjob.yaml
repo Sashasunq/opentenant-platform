@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tenant-sync
+  namespace: platform-system
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 900
+      template:
+        spec:
+          serviceAccountName: tenant-sync
+          restartPolicy: Never
+          containers:
+            - name: terraform
+              image: hashicorp/terraform:1.9.8
+              # The ConfigMap mount is read-only and init writes .terraform next to the module.
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -e
+                  cp /module/* /workspace/
+                  cd /workspace
+                  terraform init -input=false
+                  terraform apply -auto-approve -input=false
+              envFrom:
+                - configMapRef:
+                    name: tenant-sync-vars
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  memory: 512Mi
+              volumeMounts:
+                - name: module
+                  mountPath: /module
+                  readOnly: true
+                - name: workspace
+                  mountPath: /workspace
+          volumes:
+            - name: module
+              configMap:
+                name: tenant-sync-tf
+            - name: workspace
+              emptyDir: {}

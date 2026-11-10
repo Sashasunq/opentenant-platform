@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tenant-sync
+  namespace: platform-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tenant-sync
+rules:
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # Helm keeps release history in Secrets; the chart creates the rest.
+  - apiGroups: [""]
+    resources: ["secrets", "services", "serviceaccounts", "persistentvolumeclaims", "configmaps"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods", "events"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["external-secrets.io"]
+    resources: ["externalsecrets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # kubernetes_manifest resolves the ExternalSecret schema from its CRD.
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    verbs: ["get", "list"]
+  # State locking of the kubernetes backend.
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "create", "update", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tenant-sync
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tenant-sync
+subjects:
+  - kind: ServiceAccount
+    name: tenant-sync
+    namespace: platform-system
