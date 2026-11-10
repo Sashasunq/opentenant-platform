@@ -13,6 +13,6 @@ export class ValidatorController {
     @Param('projectId') projectId: string,
     @Param('userId') userId: string
   ) {
-    return await this.pipelineService.getPipelineBranch(userId, projectId);
+    return this.pipelineService.getPipelineBranch(userId, projectId);
   }
 }
